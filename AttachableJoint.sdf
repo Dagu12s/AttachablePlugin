@@ -1,0 +1,64 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="default">
+    
+
+
+
+<plugin filename="/home/david/workspace/src/ign-gazebo/examples/plugin/system_plugin/build/libAttachableJoint.so" name="attachable_joint::AttachableJoint">
+    <detachtopic>/box2/detach</detachtopic>
+    <attachtopic>/box2/attach</attachtopic>
+</plugin>
+
+  <model name="box1">
+    <pose>3 0 1 0 0 0</pose>
+    <link name="box_body">
+      <visual name="v1">
+        <geometry>
+          <box><size>1 1 1</size></box>
+        </geometry>
+        <material>
+          <diffuse>0.8 0.2 0.2 1</diffuse>
+          <specular>1.0 0 0 1</specular>
+        </material>
+      </visual>
+      <collision name="c1">
+        <geometry>
+          <box><size>1 1 1</size></box>
+        </geometry>
+      </collision>
+    </link>
+    <link name="AttachableLink_1">
+    </link>
+  </model>
+
+  <model name="box2">
+    <pose>8 0 8 0 0 0</pose>
+    <link name="box_body">
+      <visual name="v1">
+        <geometry>
+          <box><size>1 1 1</size></box>
+        </geometry>
+        <material>
+          <diffuse>0.2 0.8 0.2 1</diffuse>
+          <specular>1.0 0 0 1</specular>
+        </material>
+      </visual>
+      <collision name="c1">
+        <geometry>
+          <box><size>1 1 1</size></box>
+        </geometry>
+      </collision>
+    </link>
+    <link name="AttachableLink_1">
+    </link>
+
+
+  </model>
+
+
+  </world>
+</sdf>
+
+
+
