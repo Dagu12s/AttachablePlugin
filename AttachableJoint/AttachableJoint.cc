@@ -232,8 +232,12 @@ void AttachableJoint::OnAttachRequest(const ignition::msgs::StringMsg &msg)
   this->childLinkName = str.substr(1,last-1);
 
 
+  this->attachRequested = true;
+  ignmsg << "PM: " <<this->parentModelName <<" PL: "<< this->parentLinkName <<" CM: "<< this->childModelName <<" CL: "<< this->childLinkName 
+          << std::endl;
 
 
+  /*
   if ( (this->parentLinkName.find("AttachableLink") != -1) && (this->childLinkName.find("AttachableLink") != -1) ) {
 
     this->attachRequested = true;
@@ -243,6 +247,7 @@ void AttachableJoint::OnAttachRequest(const ignition::msgs::StringMsg &msg)
   else {
       ignerr << "parent link or child link are not AttachableLinks"<< std::endl;
   }
+  */
 
  
 
