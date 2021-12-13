@@ -94,7 +94,7 @@ class attacher_contact::AttacherContactPrivate
 
   /// \brief Namespace for transport topics.
   public: std::string ns;
-
+// ({this->parentLinkEntity, this->childLinkEntity, "fixed"})
   /// \brief Publisher which publishes a message after touched for enough time
   public: std::optional<transport::Node::Publisher> touchedPub;
 
@@ -123,6 +123,9 @@ class attacher_contact::AttacherContactPrivate
   
   public: std::atomic<bool> attachRequested{false};
 
+  private: ignition::gazebo::Entity sensorEntity{ignition::gazebo::kNullEntity};
+
+
 };
 
 //////////////////////////////////////////////////
@@ -131,7 +134,7 @@ void attacher_contact::AttacherContactPrivate::Load(const EntityComponentManager
 {
 
 
-    // Namespace
+  // Namespace
   if (!_sdf->HasElement("namespace"))
   {
     ignerr << "Missing required parameter <namespace>" << std::endl;
@@ -148,11 +151,6 @@ void attacher_contact::AttacherContactPrivate::Load(const EntityComponentManager
 
   this->targetTime = DurationType(_sdf->Get<double>("time"));
 
-
-
-
-
-
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //ignmsg << "loop"<< std::endl;
   this->attachtopic ="/" + this->ns + "/contact_topic";
@@ -164,21 +162,28 @@ void attacher_contact::AttacherContactPrivate::Load(const EntityComponentManager
 
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
+  //  this->sensorEntity = _ecm.CreateEntity();
+ 
   this->validConfig = true;
 
-  // Start enabled or not
-  if (_sdf->Get<bool>("enabled", false).first)
+
+  if (_sdf->HasElement("target"))
   {
-    this->Enable(true);
+      // Start enabled or not
+    if (_sdf->Get<bool>("enabled")) //, false).first)
+    {
+      this->Enable(true);
+    }
+    else
+    {
+      this->Enable(false);
+    }
   }
+
+
 }
 
-
-
-//////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////7
 void attacher_contact::AttacherContactPrivate::Enable(const bool _value)
 {
 
@@ -215,6 +220,8 @@ void attacher_contact::AttacherContactPrivate::Update(const UpdateInfo &_info,
                                 const EntityComponentManager &_ecm)
 {
   IGN_PROFILE("attacher_contact::AttacherContactPrivate::Update");
+  
+  
 
   if (this->enabled == false) {
     return;
@@ -278,7 +285,7 @@ void attacher_contact::AttacherContactPrivate::Update(const UpdateInfo &_info,
     
     return;
   }
-
+  else
   // Start touch timer
   {
     if (this->touchStart == DurationType::zero())
@@ -364,7 +371,7 @@ void attacher_contact::AttacherContact::PreUpdate(const UpdateInfo &, EntityComp
   {
     // We call Load here instead of Configure because we can't be guaranteed
     // that all entities have been created when Configure is called
-    this->dataPtr->Load(_ecm, this->dataPtr->sdfConfig);
+    this->dataPtr->Load(_ecm, this->dataPtr->sdfConfig);   
     this->dataPtr->initialized = true;
   }
 
@@ -403,6 +410,7 @@ void attacher_contact::AttacherContact::PreUpdate(const UpdateInfo &, EntityComp
     // Create a list of collision entities that have been marked as contact
     // sensors in this model. These are collisions that have a ContactSensorData
     // component
+
     auto allLinks = _ecm.EntitiesByComponents(components::Name(this->dataPtr->Link1_sensor), components::Link()); //, this->dataPtr->model.Entity()
         //_ecm.ChildrenByComponents(this->model.Entity(), components::Link());
 
