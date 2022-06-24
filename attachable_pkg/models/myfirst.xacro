@@ -1,0 +1,25 @@
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="test">
+
+  <xacro:include filename="import_path.xacro"/>
+  <!--xacro:include filename="rm2_leg.xacro" />
+  <xacro:include filename="rm2_body.xacro" /-->
+
+  <!--xacro:macro name="blue_shape">
+      <link name="base1">
+      <visual>
+        <geometry>
+          <cylinder length="0.6" radius="0.2"/>
+        </geometry>
+      </visual>
+    </link>
+  </xacro:macro
+  AttachableLink_leg1
+  legLink_leg1
+  -->
+
+  <xacro:body sufix="1">  
+  </xacro:body>
+
+
+  
+  <xacro:leg sufix="1"/><joint name="AttachableJoint_1body1_1leg1" type="fixed"><parent link="AttachableLink_1_body_1"/><child link="AttachableLink_1_leg_1"/><origin rpy="0 0 0" xyz="0 0 0"/></joint></robot>
