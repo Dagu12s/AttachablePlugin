@@ -36,7 +36,7 @@ class AttachableJointActionServer(Node):
         self.contactPublisher = self.create_publisher(String, self.contactPublisherTopic,10)
         self.contactSubscriber = self.create_subscription(Bool, self.contactSubscriberTopic, self.contactSubscriber_callack, 10)
 
-        self.filename = "/myfirst"
+        self.filename = "actual_model"
         self.msgToPublish = String()
 
         self.error = False
@@ -135,7 +135,7 @@ class AttachableJointActionServer(Node):
                 self.attachModelIgnition()
 
                 #Add model in URDF
-                merge.addModel(self.filename, "AttachableLink_1_body_1", "AttachableLink_1_leg_1" )#self.parentLink, self.childLink)
+                merge.addModel(self.filename, self.parentLink, self.childLink)#"AttachableLink_1_body_1", "AttachableLink_1_leg_1" )#
 
                 #Reestart State Publisher with the new URDF
                 self.restartStatePublisher()
