@@ -63,6 +63,7 @@ void AttachableJoint::Configure(const ignition::gazebo::Entity &_entity,
     return;
   }
 
+  ignerr << "HA LLEGADO 1";
 
 
   this->suppressChildWarning =
@@ -85,8 +86,10 @@ void AttachableJoint::PreUpdate(
 {
   //ignmsg << "loop"<< std::endl;
   IGN_PROFILE("AttachableJoint::PreUpdate"); 
+
   if (this->not_initialized)
   {
+  ignerr << "HA LLEGADO 2" << this->attachtopic;
   this->node.Subscribe(
       this->attachtopic, &AttachableJoint::OnAttachRequest, this);
 
@@ -118,7 +121,7 @@ void AttachableJoint::PreUpdate(
         
         cmodelEntity = _ecm.EntityByComponents(ignition::gazebo::components::Model(), ignition::gazebo::components::Name(this->childModelName));
         if (ignition::gazebo::kNullEntity != cmodelEntity)
-        {
+        {ignerr << "CREAMOS JOINT ==================== \n\n";
           this->childLinkEntity = _ecm.EntityByComponents(
               ignition::gazebo::components::Link(), ignition::gazebo::components::ParentEntity(cmodelEntity),
               ignition::gazebo::components::Name(this->childLinkName));
@@ -199,8 +202,6 @@ void AttachableJoint::OnAttachRequest(const ignition::msgs::StringMsg &msg)
   
   ignmsg << "El mensaje enviado es: " << msg.data() << std::endl;
   
-
-
   // [parentModel][ParentLink][ChildModel][ChildLink]
   //Now the Link must be nammed AttachableLink_Name or wont work
 
@@ -230,11 +231,11 @@ void AttachableJoint::OnAttachRequest(const ignition::msgs::StringMsg &msg)
   str = &str[first];
   last = str.find(']');
   this->childLinkName = str.substr(1,last-1);
-
-
+  ignerr << "HA LLEGADO AQUI";
+  //ignmsg
   this->attachRequested = true;
-  ignmsg << "PM: " <<this->parentModelName <<" PL: "<< this->parentLinkName <<" CM: "<< this->childModelName <<" CL: "<< this->childLinkName 
-          << std::endl;
+  ignerr << "PM: " <<this->parentModelName <<" PL: "<< this->parentLinkName <<" CM: "<< this->childModelName <<" CL: "<< this->childLinkName 
+          << std::endl << "\n\n\n";
 
 
   /*
@@ -258,5 +259,4 @@ IGNITION_ADD_PLUGIN(attachable_joint::AttachableJoint,
                     attachable_joint::AttachableJoint::ISystemConfigure,
                     attachable_joint::AttachableJoint::ISystemPreUpdate)
 
-IGNITION_ADD_PLUGIN_ALIAS(AttachableJoint,
-  "attachable_joint::AtachableJoint")
+IGNITION_ADD_PLUGIN_ALIAS(AttachableJoint,"attachable_joint::AtachableJoint")
