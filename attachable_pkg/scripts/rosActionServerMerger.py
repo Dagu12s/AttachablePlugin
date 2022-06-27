@@ -55,17 +55,17 @@ class AttachableJointActionServer(Node):
 
 
     def attachModelIgnition(self):
-        attachableJointPublisher = self.create_publisher(String, "/" + self.parentLink + "/attach" ,10)
+        attachableJointPublisher = self.create_publisher(String, "/AttachableJoint/attach" ,10)
         parentSplit = self.parentLink.split("_")
         childSplit = self.childLink.split("_")
         parentModel = parentSplit[2] + "_" + parentSplit[3]
         childModel =   childSplit[2] + "_" + childSplit[3]
-        self.msgToPublish.data = 'data: "[{}][{}][{}][{}]" '.format(parentModel, self.parentLink, childModel, self.childLink)
+        self.msgToPublish.data = '[{}][{}][{}][{}]'.format(parentModel, self.parentLink, childModel, self.childLink)
         attachableJointPublisher.publish(self.msgToPublish)
 
 
     def dettachModelIgnition(self):
-        attachableJointPublisher = self.create_publisher(Empty, "/" + self.parentLink + "/detach" ,10)
+        attachableJointPublisher = self.create_publisher(Empty, "/AttachableJoint/detach" ,10)
         emptyMsg = Empty()
         attachableJointPublisher.publish(emptyMsg)
 
@@ -104,10 +104,6 @@ class AttachableJointActionServer(Node):
         # robot_desc = robot_description_config.toxml()
   
         
-#self.parametervalue.string_value='<?xml version="1.0" ?><robot name="test"><link name="bodyBase_body_1"><visual><origin rpy="0 0 0" xyz="0 0 0"/><geometry><mesh filename="package://rm2_simulation/models/rm2_body/meshes/b_simple.dae"/></geometry></visual><collision><geometry><mesh filename="package://rm2_simulation/models/rm2_body/meshes/body_collision.stl"/></geometry></collision><inertial><mass value="1.8"/><inertia ixx="2.501" ixy="0" ixz="0" iyy="2.501" iyz="0.0" izz="5"/></inertial></link><link name="AttachableLink_1_body_1"/><joint name="AttachableLinkJoint_1_body_1" type="fixed"><parent link="bodyBase_body_1"/><child link="AttachableLink_1_body_1"/><origin rpy="0 0 0" xyz="0.0 0 0.085"/></joint></robot>'
-#self.parametervalue.string_value='<?xml version="1.0" ?><robot name="test"><link name="bodyBase_body_1"><visual><origin rpy="0 0 0" xyz="0 0 0"/><geometry><mesh filename="package://rm2_simulation/models/rm2_body/meshes/b_simple.dae"/></geometry></visual><collision><origin rpy="0 0 0" xyz="0 0 0"/><geometry><mesh filename="package://rm2_simulation/models/rm2_body/meshes/body_collision.stl"/></geometry></collision><inertial><mass value="1.8"/><inertia ixx="2.501" ixy="0" ixz="0" iyy="2.501" iyz="0.0" izz="5"/></inertial></link><link name="AttachableLink_1_body_1"/><joint name="AttachableLinkJoint_1_body_1" type="fixed"><parent link="bodyBase_body_1"/><child link="AttachableLink_1_body_1"/><origin rpy="0 0 0" xyz="0.0 0 0.085"/></joint><link name="AttachableLink_2_body_1"/><joint name="AttachableLinkJoint_2_body_1" type="fixed"><parent link="bodyBase_body_1"/><child link="AttachableLink_2_body_1"/><origin rpy="-2.0944 0 0" xyz="0.0 0.0736 -0.0425"/></joint><link name="AttachableLink_3_body_1"/><joint name="AttachableLinkJoint_3_body_1" type="fixed"><parent link="bodyBase_body_1"/><child link="AttachableLink_3_body_1"/><origin rpy="2.0944 0 0" xyz="0.0 -0.0736 -0.0425"/></joint></robot>'
-
-
     def execute_callback(self, goal_handle):
         self.get_logger().info('Executing goal...')
         
@@ -118,15 +114,13 @@ class AttachableJointActionServer(Node):
         self.parentLink = goal_handle.request.parent
 
         self.get_logger().info("Executing Goal...")
-
+        print(1)
         if True == goal_handle.request.attach:
-                
             #Check if the linsk are touching       
-            self.msgToPublish.data = 'data: "[{}][{}]" '.format(self.parentLink, self.childLink)
-            self.contactPublisher.publish(self.msgToPublish)
-
-            self.waitToResponse(0.5)
-
+            self.msgToPublish.data = '[{}][{}]'.format(self.parentLink, self.childLink)
+            #self.contactPublisher.publish(self.msgToPublish)
+            # self.waitToResponse(0.1)
+            self.contact = True
             if self.contact:
 
                 self.get_logger().info("Links are in contact, Attaching models...")
@@ -135,10 +129,10 @@ class AttachableJointActionServer(Node):
                 self.attachModelIgnition()
 
                 #Add model in URDF
-                merge.addModel(self.filename, self.parentLink, self.childLink)#"AttachableLink_1_body_1", "AttachableLink_1_leg_1" )#
+                #merge.addModel(self.filename, self.parentLink, self.childLink)#"AttachableLink_1_body_1", "AttachableLink_1_leg_1" )#
 
                 #Reestart State Publisher with the new URDF
-                self.restartStatePublisher()
+                #self.restartStatePublisher()
                 
                 result.response = "True"
 
@@ -155,10 +149,10 @@ class AttachableJointActionServer(Node):
             #Detach Models in ignition
             self.dettachModelIgnition()
             #Remove model in URDF
-            merge.removeModel(self.filename, self.parentLink, self.childLink )
+            #merge.removeModel(self.filename, self.parentLink, self.childLink )
 
             #Reset robot state publisher
-            self.restartStatePublisher()
+            #self.restartStatePublisher()
 
             result.response = "True"
 
