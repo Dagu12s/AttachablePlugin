@@ -28,14 +28,10 @@
       </inertial>
       <collision name='collision'>
         <geometry>
-          <cylinder>
-            <radius>.18</radius>
-              <length>.05</length>
-          </cylinder>
-          <!--mesh>
+          <mesh>
             <scale> 0.001 0.001 0.001</scale>
             <uri>model://rm2/rm2_body/meshes/body_collision.stl</uri>
-          </mesh-->
+          </mesh>
         </geometry>
       </collision>
       <visual name='visual'>

@@ -1,0 +1,111 @@
+Download repository
+~~~
+git clone 
+~~~
+it should create a directory called "AttachablePlugin"
+
+
+Add the plugin to ignition (workspace is where ignition from source is installed):
+~~~
+cd ~/workspace/src/ign-gazebo/examples/plugin
+
+mkdir AttacherContact
+
+cd AttacherContact
+
+rm -r AttacherContact.*
+ln -s /AttachablePlugin/AttacherContact/CMakeLists.txt 
+ln -s /AttachablePlugin/AttacherContact/AttacherContact.cc 
+ln -s /AttachablePlugin/AttacherContact/AttacherContact.hh
+ln -s /AttachablePlugin/AttacherContact/AttacherContact.sdf
+~~~
+
+
+For build the plugin, create a directory named build and run:
+~~~
+mkdir build
+cd build
+cmake ..
+make
+~~~
+
+
+The same for the AttachableJoint plugin
+
+~~~
+cd ~/workspace/src/ign-gazebo/examples/examples/system_plugin
+
+rm -r AttachableJoint.*
+rm CMakeLists.txt
+ln -s /AttachablePlugin/AttachableJoint/CMakeLists.txt 
+ln -s /AttachablePlugin/AttachableJoint/AttachableJoint.cc 
+ln -s /AttachablePlugin/AttachableJoint/AttachableJoint.hh
+ln -s /AttachablePlugin/AttachableJoint/AttachableJoint.sdf
+
+~~~
+
+
+For build the plugin, create a directory named build and run:
+~~~
+mkdir build
+cd build
+cmake ..
+make
+~~~
+
+
+Add library:
+~~~
+cd ign-gazebo/examples/plugins/AttacherContact
+export IGN_GAZEBO_SYSTEM_PLUGIN_PATH=`pwd`/build
+~~~
+
+Add library:
+~~~
+cd ign-gazebo/examples/plugins/system_plugin
+export IGN_GAZEBO_SYSTEM_PLUGIN_PATH=`pwd`/build
+~~~
+
+
+
+Una vez se tienen los plugins instalados hay que instalar el paquete de ros, de la misma manera se puede crear un link para tenerlo en el workspace que se desee
+~~~
+cd rm2_workspace/src
+
+ln -s /AttachablePlugin/attachable_pkg 
+~~~
+
+para buildear el paquete hay que hacer:
+~~~
+cd ~/rm2_workspace
+
+colcon build
+~~~
+
+
+
+En el propio paquete de ros viene el launchfile que se debería usar para spawnear 2 robots, se puede modificar como se quiera
+  - robominerActionServer.launch.py
+
+lanzaría el world que hay en rm2_simulation pero los modelos los he tenido que modificar un poco por lo que se encuentran ene l paquete "attachable_pkg"
+Los modelos que actualmente usa son
+  - models/rm2/rm2_sim/model.sdf
+  - models/rm2/rm2_sim2/model.sdf
+
+Para lanzar attach:
+ros2 action send_goal AttachableJoint rm2_simulation/action/AttachModel "{parent: "AttachableLink_1_rm2_1", child: "AttachableLink_1_rms_2", attach: true}"
+
+Para lanzar dettach:
+ros2 action send_goal AttachableJoint rm2_simulation/action/AttachModel "{parent: "AttachableLink_1_rm2_1", child: "AttachableLink_1_rms_2", attach: false}"
+
+
+También se puede hacer desde ignition:
+ign topic -t /AttachableJoint/attach -m ignition.msgs.StringMsg -p 'data: "[rm2_1][AttachableLink_1_rm2_1][rm2_2][AttachableLink_1_rm2_2]" '
+
+desde ros2:
+ros2 topic pub /AttachableJoint/attach  -1 std_msgs/msg/String 'data: "[rm2_1][AttachableLink_1_rm2_1][rm2_2][AttachableLink_1_rm2_2]" '
+
+
+IMPORTANTE:
+Actualmente la funcionalidad de que tienen que estar en contacto los robots (los links) no está funcionando, está bypaseada ya que da problemas la simulación con las collision, y nunca pilla que se están tocando.
+Se puede poner y probar pero parece que no funciona correctamente, igual habría que cambiar el mesh y poner una figura más sencilla
