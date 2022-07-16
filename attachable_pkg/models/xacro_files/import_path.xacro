@@ -2,7 +2,10 @@
 <robot name="imports" xmlns:xacro="http://wiki.ros.org/xacro">
 
 
-  <xacro:include filename="../models/rm2_body.xacro" />
-  <xacro:include filename="../models/rm2_leg.xacro" />
+  <!--xacro:include filename="../models/rm2_body.xacro" />
+  <xacro:include filename="../models/rm2_leg.xacro" /-->
+
+  <xacro:include filename="$(find attachable_pkg)/models/xacro_files/rm2_body.xacro"/>
+  <xacro:include filename="$(find attachable_pkg)/models/xacro_files/rm2_leg.xacro" />
 
 </robot>

@@ -63,7 +63,6 @@ void AttachableJoint::Configure(const ignition::gazebo::Entity &_entity,
     return;
   }
 
-  ignerr << "HA LLEGADO 1";
 
 
   this->suppressChildWarning =
@@ -89,7 +88,6 @@ void AttachableJoint::PreUpdate(
 
   if (this->not_initialized)
   {
-  ignerr << "HA LLEGADO 2" << this->attachtopic;
   this->node.Subscribe(
       this->attachtopic, &AttachableJoint::OnAttachRequest, this);
 
@@ -121,7 +119,7 @@ void AttachableJoint::PreUpdate(
         
         cmodelEntity = _ecm.EntityByComponents(ignition::gazebo::components::Model(), ignition::gazebo::components::Name(this->childModelName));
         if (ignition::gazebo::kNullEntity != cmodelEntity)
-        {ignerr << "CREAMOS JOINT ==================== \n\n";
+        {
           this->childLinkEntity = _ecm.EntityByComponents(
               ignition::gazebo::components::Link(), ignition::gazebo::components::ParentEntity(cmodelEntity),
               ignition::gazebo::components::Name(this->childLinkName));
@@ -231,10 +229,9 @@ void AttachableJoint::OnAttachRequest(const ignition::msgs::StringMsg &msg)
   str = &str[first];
   last = str.find(']');
   this->childLinkName = str.substr(1,last-1);
-  ignerr << "HA LLEGADO AQUI";
-  //ignmsg
+
   this->attachRequested = true;
-  ignerr << "PM: " <<this->parentModelName <<" PL: "<< this->parentLinkName <<" CM: "<< this->childModelName <<" CL: "<< this->childLinkName 
+  ignmsg << "PM: " <<this->parentModelName <<" PL: "<< this->parentLinkName <<" CM: "<< this->childModelName <<" CL: "<< this->childLinkName 
           << std::endl << "\n\n\n";
 
 

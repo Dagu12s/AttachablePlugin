@@ -21,7 +21,8 @@ def generate_launch_description():
   use_sim_time = LaunchConfiguration('use_sim_time', default='false')
   pkg_ros_ign_gazebo = get_package_share_directory('ros_ign_gazebo')
   pkg_rm2 = "/home/david/rm2_workspace/src/rm2_simulation"
-  pkg_attach = "/home/david/rm2_workspace/src/attach"  #pkg = get_package_share_directory('attachable_pkg')
+  #pkg_attach = "/home/david/rm2_workspace/src/attach"  #
+  pkg_attach = get_package_share_directory('attachable_pkg')
   
 
   file_name = "actual_model"
@@ -51,7 +52,7 @@ def generate_launch_description():
 
   return LaunchDescription([
     DeclareLaunchArgument('ign_args',
-        default_value=[os.path.join(pkg_attach, 'worlds', 'cave_world.sdf') +' --gui-config ' +
+        default_value=[os.path.join(pkg_attach, 'worlds', 'test_worldContactSensor.sdf') +' --gui-config ' +
         os.path.join(pkg_attach, 'ign', 'gui.config'), ''], 
         description='Ignition Gazebo arguments'),
         ign_gazebo,

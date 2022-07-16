@@ -22,4 +22,4 @@
 
 
   
-  <xacro:leg sufix="1"/><joint name="AttachableJoint_1body1_1leg1" type="fixed"><parent link="AttachableLink_1_body_1"/><child link="AttachableLink_1_leg_1"/><origin rpy="0 0 0" xyz="0 0 0"/></joint><xacro:leg sufix="1"/><joint name="AttachableJoint_1body1_1leg1" type="fixed"><parent link="AttachableLink_1_body_1"/><child link="AttachableLink_1_leg_1"/><origin rpy="0 0 0" xyz="0 0 0"/></joint></robot>
+  </robot>

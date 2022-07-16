@@ -10,7 +10,7 @@ import rclpy
 from rclpy.action import ActionServer
 from rclpy.node import Node
 
-from rm2_simulation.action import AttachModel
+from attachable_pkg.action import AttachModel
 from std_msgs.msg import String
 from std_msgs.msg import Empty
 from std_msgs.msg import Bool
@@ -120,7 +120,7 @@ class AttachableJointActionServer(Node):
             self.msgToPublish.data = '[{}][{}]'.format(self.parentLink, self.childLink)
             #self.contactPublisher.publish(self.msgToPublish)
             # self.waitToResponse(0.1)
-            self.contact = True
+
             if self.contact:
 
                 self.get_logger().info("Links are in contact, Attaching models...")
@@ -147,6 +147,8 @@ class AttachableJointActionServer(Node):
 
         else:
             #Detach Models in ignition
+            self.get_logger().info("Detach models...")
+
             self.dettachModelIgnition()
             #Remove model in URDF
             #merge.removeModel(self.filename, self.parentLink, self.childLink )
