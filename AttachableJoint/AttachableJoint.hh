@@ -70,10 +70,16 @@ class AttachableJoint
               ignition::gazebo::EntityComponentManager &_ecm) final;
 
   /// \brief Callback for detach request topic
-  private: void OnDetachRequest(const ignition::msgs::Empty &_msg);
+  private: void OnDetachRequest(const ignition::msgs::StringMsg &_msg);
 
   /// \brief Callback for detach request topic
   private: void OnAttachRequest(const ignition::msgs::StringMsg &_msg);
+
+  /// \brief Collision entities that have been designated as contact sensors.
+  /// These will be checked against the targetEntities to establish whether this
+  /// model is touching the targets
+  /*public: std::vector<Entity> attachableJointList;*/
+  public: std::vector<std::pair<ignition::gazebo::Entity, std::string>> attachableJointList;
 
   /// \brief The model associated with this system.
   private: ignition::gazebo::Model model;
@@ -91,11 +97,11 @@ class AttachableJoint
   /// \brief Name of attachment link in the child model
   private: std::string childLinkName;
 
-  /// \brief Topic to be used for detaching connections
-  private: std::string attachtopic;
+  /// \brief Name of Parent Model
+  private: std::string attachableJointName;
 
   /// \brief Topic to be used for detaching connections
-  private: std::string detachtopic;
+  private: std::string attachtopic;
 
   /// \brief Whether to suppress warning about missing child model.
   private: bool suppressChildWarning{false};
@@ -117,7 +123,6 @@ class AttachableJoint
 
   /// \brief Whether detachment has been requested
   private: std::atomic<bool> attachRequested{false};
-
 
   /// \brief Ignition communication node.
   public: ignition::transport::Node node;

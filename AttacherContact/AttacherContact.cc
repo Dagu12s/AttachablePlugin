@@ -111,16 +111,6 @@ class attacher_contact::AttacherContactPrivate
   /// \brief Whether the plugin is enabled.
   public: bool enabled{false};
 
-  /// \brief Name of Parent Model
-  private: std::string sensorModelName;
-
-  /// \brief Name of Parent Model
-  private: std::string sensorLinkName;
-
-  /// \brief Name of child model
-  private: std::string targetModelName;
-
-  /// \brief Name of attachment link in the child model
   private: std::string targetLinkName;
 
   /// \brief Entity of attachment link in the parent model
@@ -133,10 +123,21 @@ class attacher_contact::AttacherContactPrivate
   public: std::string attachtopic; 
 
   public: void OnAttachRequest(const ignition::msgs::StringMsg &_msg);
+ 
+  /// \brief Name of Parent Model
+  private: std::string sensorModelName;
 
-  public: std::string Link1_sensor;
+  /// \brief Name of Parent Model
+  private: std::string sensorLinkName;
 
-  public: std::string Link2;
+  /// \brief Name of child model
+  private: std::string targetModelName;
+
+  /// \brief Name of attachment link in the child model
+
+  public: std::string sensorLink;
+
+  public: std::string sensorModel;
   
   public: std::atomic<bool> attachRequested{false};
 
@@ -174,8 +175,9 @@ void attacher_contact::AttacherContactPrivate::Load(const EntityComponentManager
           << "[" << this->attachtopic << "]" << std::endl;
  
   this->validConfig = true;
-  this->ns = "AttacherContact";
-/*
+  this->targetName = "***";
+
+  /*
   if (_sdf->HasElement("target"))
   {
       // Start enabled or not
@@ -190,7 +192,6 @@ void attacher_contact::AttacherContactPrivate::Load(const EntityComponentManager
 
 
   }*/
-
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////7
@@ -200,8 +201,7 @@ void attacher_contact::AttacherContactPrivate::Enable(const bool _value)
   if (_value)
   {
     this->touchedPub.reset();
-    this->touchedPub = this->node.Advertise<msgs::Boolean>(
-        "/" + this->ns + "/touched");
+    this->touchedPub = this->node.Advertise<msgs::Boolean>("AttacherContact/touched");
 
     this->touchStart = DurationType::zero();
     this->enabled = true;
@@ -231,6 +231,7 @@ void attacher_contact::AttacherContactPrivate::Update(const UpdateInfo &_info,
 {
   IGN_PROFILE("attacher_contact::AttacherContactPrivate::Update");
   
+  
 
   if (this->enabled == false) {
     return;
@@ -245,7 +246,6 @@ void attacher_contact::AttacherContactPrivate::Update(const UpdateInfo &_info,
         << "s]. System may not work properly." << std::endl;
   }
 
-
   if (_info.paused)
     return;
 
@@ -257,8 +257,15 @@ void attacher_contact::AttacherContactPrivate::Update(const UpdateInfo &_info,
   for (const Entity colEntity : this->collisionEntities)
   {
     auto *contacts = _ecm.Component<components::ContactSensorData>(colEntity);
+
+    // ignerr << "Hay contactos ??? "<< "\n" ;
+
     if (contacts)
-    {
+    {     
+      // std::string name = scopedName(colEntity, _ecm);
+ 
+      // ignerr << "          Si hay contactos " << name << "\n\n" ;
+
       // Check if the contacts include one of the target entities.
       for (const auto &contact : contacts->Data().contact())
       {
@@ -328,9 +335,6 @@ void attacher_contact::AttacherContactPrivate::Update(const UpdateInfo &_info,
         this->touchedPub->Publish(msg);
       }
     }
-    // Disable
-    //this->Enable(false);
-    //this->enabled = false;
   }
 }
 
@@ -349,8 +353,11 @@ void attacher_contact::AttacherContactPrivate::AddTargetEntities(const EntityCom
     std::string name = scopedName(entity, _ecm);
     if (name.find(this->targetName) != std::string::npos)
     {
+
+      ignerr << "NEW ENTITIE " << name << " because the target name is -" << this->targetName << "-\n\n" ;
       this->targetEntities.push_back(entity);
     }
+      
   }
 
   // Sort so that we can do binary search later on.
@@ -362,13 +369,6 @@ void attacher_contact::AttacherContact::Configure(const Entity &_entity,
                             const std::shared_ptr<const sdf::Element> &_sdf,
                             EntityComponentManager &_ecm, EventManager &)
 {
-  this->dataPtr->model = Model(_entity);
-  if (!this->dataPtr->model.Valid(_ecm))
-  {
-    ignerr << "Touch plugin should be attached to a model entity. "
-           << "Failed to initialize." << std::endl;
-    return;
-  }
   this->dataPtr->sdfConfig = _sdf->Clone();
 }
 
@@ -394,6 +394,7 @@ void attacher_contact::AttacherContact::PreUpdate(const UpdateInfo &, EntityComp
         [&](const Entity &_entity, const components::Collision *) -> bool
         {
           potentialEntities.push_back(_entity);
+          ignerr << "ADD NEW ENTITIE" << "\n\n";
           return true;
         });
     this->dataPtr->AddTargetEntities(_ecm, potentialEntities);
@@ -420,22 +421,26 @@ void attacher_contact::AttacherContact::PreUpdate(const UpdateInfo &, EntityComp
     // sensors in this model. These are collisions that have a ContactSensorData
     // component
 
-    auto allLinks = _ecm.EntitiesByComponents(components::Name(this->dataPtr->Link1_sensor), components::Link()); //, this->dataPtr->model.Entity()
+    auto allLinks = _ecm.EntitiesByComponents(components::Name(this->dataPtr->sensorLink), components::Link()); //, this->dataPtr->model.Entity()
         //_ecm.ChildrenByComponents(this->model.Entity(), components::Link());
 
     for (const Entity linkEntity : allLinks)
-    {
+    {std::string name = scopedName(linkEntity, _ecm);
+          ignerr << "SENSOR LINK NAME " << name << "\n\n" ;
       auto linkCollisions =
           _ecm.ChildrenByComponents(linkEntity, components::Collision());
       for (const Entity colEntity : linkCollisions)
       {
-        if (_ecm.EntityHasComponentType(colEntity,
+         if (_ecm.EntityHasComponentType(colEntity,
                                         components::ContactSensorData::typeId))
         {
+          ignerr << "NEW ADDED SENSOR " << name << "\n\n" ;
           this->dataPtr->collisionEntities.push_back(colEntity);
         }
       }
     }
+ 
+
   }
 }
 
@@ -470,27 +475,25 @@ void attacher_contact::AttacherContactPrivate::OnAttachRequest(const ignition::m
   {
     str = &str[first];
     unsigned last = str.find(']');
-    this->Link1_sensor= str.substr(1,last-1);
+    this->sensorLink= str.substr(1,last-1);
     str = &str[last];
 
     first = str.find('[');
     str = &str[first];
     last = str.find(']');
     //this->Link2 = str.substr(1,last-1);
-    this->targetName = str.substr(1,last-1); //Link2;
 
-    
+    this->targetName = str.substr(1,last-1); //Link2;
     this->attachRequested = true;
     //this->enabled = true;
     this->Enable(true);
-
   }
 
   else  if (str.find("end") != -1)
   {
     //this->enabled = false;
     this->Enable(false);
-    ignerr << "Disabled";
+    ignmsg << "Disabled";
   }
 
 
