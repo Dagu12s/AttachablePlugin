@@ -9,8 +9,7 @@ It can be used to grab things in gazebo and for modular robots.
 
 1. Include the plugin in the .sdf world.
 
-It does not need to be inside a model. You have to add the topic for creating the link and the topic for destroy the link
-you may have to change the filename
+It does not need to be inside a model. 
 ~~~
 <plugin filename=" ... /libAttachableJoint.so" name="attachable_joint::AttachableJoint">
 </plugin>
@@ -20,10 +19,12 @@ you may have to change the filename
 
 2. Create and Destroy the Link Dinamically
 
-For creating the link you have to send a ignition::msgs::StringMsg with this architecture:
-[parentModel][ParentLink][ChildModel][ChildLink][attach]
+To create a link you have to send a ignition::msgs::StringMsg with this architecture:
+[ParentModel][ParentLink][ChildModel][ChildLink][attach]
+
 If you want to detach use [detach]
-like this
+
+like this:
 ~~~
 ign topic -t /AttachableJoint -m ignition.msgs.StringMsg -p 'data:"[parentModel][ParentLink][ChildModel][ChildLink][attach]"'
 ~~~
