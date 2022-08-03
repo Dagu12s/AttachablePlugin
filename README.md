@@ -12,11 +12,6 @@ git clone
 it should create a directory called "AttachablePlugin"
 
 
-# Installation
-I compiled the binary for ROS 2 Foxy (Ubuntu 20.04) you can use .so or compile it yourself. To compile you need ignition from source.
-
-
-
 
 Include the plugin in the .sdf world.
 
@@ -44,6 +39,11 @@ You can send it from ROS2, see https://github.com/ignitionrobotics/ros_ign/tree/
 
 
 
+
+
+
+# Installation
+I compiled the binary for ROS 2 Foxy (Ubuntu 20.04) you can use .so or compile it yourself. To compile you need ignition from source.
 
 
 
