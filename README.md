@@ -5,15 +5,9 @@
 This is a plugin for Ignitions that generates a joint Dinamically during simulation with a topic where you send a string that contains parent model, parent link, child model and child link.
 It can be used to grab things in gazebo and for modular robots.
 
-Download repository
-~~~
-git clone 
-~~~
-it should create a directory called "AttachablePlugin"
 
 
-
-Include the plugin in the .sdf world.
+1. Include the plugin in the .sdf world.
 
 It does not need to be inside a model. You have to add the topic for creating the link and the topic for destroy the link
 you may have to change the filename
@@ -24,7 +18,7 @@ you may have to change the filename
 
 
 
-Create and Destroy the Link Dinamically
+2. Create and Destroy the Link Dinamically
 
 For creating the link you have to send a ignition::msgs::StringMsg with this architecture:
 [parentModel][ParentLink][ChildModel][ChildLink][attach]
@@ -43,6 +37,15 @@ You can send it from ROS2, see https://github.com/ignitionrobotics/ros_ign/tree/
 
 
 # Installation
+
+Download repository
+~~~
+git clone 
+~~~
+it should create a directory called "AttachablePlugin"
+
+
+
 I compiled the binary for ROS 2 Foxy (Ubuntu 20.04) you can use .so or compile it yourself. To compile you need ignition from source.
 
 
