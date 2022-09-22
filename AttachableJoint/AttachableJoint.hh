@@ -103,6 +103,9 @@ class AttachableJoint
   /// \brief Topic to be used for detaching connections
   private: std::string attachtopic;
 
+  /// \brief Topic to publish error messages
+  public: std::optional<ignition::transport::Node::Publisher>   error_topic;
+
   /// \brief Whether to suppress warning about missing child model.
   private: bool suppressChildWarning{false};
   

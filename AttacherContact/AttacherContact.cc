@@ -34,11 +34,42 @@
 #include "ignition/gazebo/components/Collision.hh"
 #include "ignition/gazebo/components/Link.hh"
 #include "ignition/gazebo/components/Name.hh"
+#include "ignition/gazebo/components/Model.hh"
 #include "ignition/gazebo/components/Sensor.hh"
+#include "ignition/gazebo/components/ParentEntity.hh"
 
 #include "ignition/gazebo/Model.hh"
 #include "ignition/gazebo/Util.hh"
 
+
+
+/////////////////////////////////////////////////////////////////////////
+#include <vector>
+
+#include <ignition/plugin/Register.hh>
+#include <ignition/transport/Node.hh>
+
+#include <ignition/common/Profiler.hh>
+
+#include <sdf/Element.hh>
+
+#include "ignition/gazebo/components/DetachableJoint.hh"
+#include "ignition/gazebo/Model.hh"
+#include "ignition/gazebo/System.hh"
+#include "ignition/gazebo/components/Link.hh"
+#include "ignition/gazebo/components/Model.hh"
+#include "ignition/gazebo/components/Name.hh"
+#include "ignition/gazebo/components/ParentEntity.hh"
+#include "ignition/gazebo/components/Pose.hh"
+#include "ignition/gazebo/Model.hh"
+#include "ignition/gazebo/Util.hh"
+
+#include <string>
+#include <iostream>
+
+//#include "/home/david/Attacher/src/linking_try/include/AttachableJoint.hh"
+#include <ignition/gazebo/System.hh>
+/////////////////////////////////////////////////////
 
 using namespace ignition;
 using namespace gazebo;
@@ -111,8 +142,6 @@ class attacher_contact::AttacherContactPrivate
   /// \brief Whether the plugin is enabled.
   public: bool enabled{false};
 
-  private: std::string targetLinkName;
-
   /// \brief Entity of attachment link in the parent model
   private: ignition::gazebo::Entity sensorLinkEntity{ignition::gazebo::kNullEntity};
 
@@ -125,19 +154,21 @@ class attacher_contact::AttacherContactPrivate
   public: void OnAttachRequest(const ignition::msgs::StringMsg &_msg);
  
   /// \brief Name of Parent Model
-  private: std::string sensorModelName;
+  public: std::string sensorModelName;
 
   /// \brief Name of Parent Model
-  private: std::string sensorLinkName;
+  public: std::string sensorLinkName;
 
-  /// \brief Name of child model
-  private: std::string targetModelName;
+  /// \brief Name of target model
+  public: std::string targetModelName;
+
+  /// \brief Name of target Link
+  public: std::string targetLinkName;
 
   /// \brief Name of attachment link in the child model
 
   public: std::string sensorLink;
 
-  public: std::string sensorModel;
   
   public: std::atomic<bool> attachRequested{false};
 
@@ -175,23 +206,6 @@ void attacher_contact::AttacherContactPrivate::Load(const EntityComponentManager
           << "[" << this->attachtopic << "]" << std::endl;
  
   this->validConfig = true;
-  this->targetName = "***";
-
-  /*
-  if (_sdf->HasElement("target"))
-  {
-      // Start enabled or not
-    if (_sdf->Get<bool>("enabled")) //, false).first)
-    {
-      this->Enable(true);
-    }
-    else
-    {
-      this->Enable(false);
-    }
-
-
-  }*/
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////7
@@ -214,7 +228,7 @@ void attacher_contact::AttacherContactPrivate::Enable(const bool _value)
     this->enabled = false;
 
     this->targetEntities.clear(); //= kNullEntity;
-
+    this->collisionEntities.clear();
     igndbg << "Stopped touch plugin [" << this->ns << "]" << std::endl;
   }
 }
@@ -231,12 +245,9 @@ void attacher_contact::AttacherContactPrivate::Update(const UpdateInfo &_info,
 {
   IGN_PROFILE("attacher_contact::AttacherContactPrivate::Update");
   
-  
-
   if (this->enabled == false) {
     return;
   }
-
 
   // \TODO(anyone) Support rewind
   if (_info.dt < std::chrono::steady_clock::duration::zero())
@@ -262,10 +273,6 @@ void attacher_contact::AttacherContactPrivate::Update(const UpdateInfo &_info,
 
     if (contacts)
     {     
-      // std::string name = scopedName(colEntity, _ecm);
- 
-      // ignerr << "          Si hay contactos " << name << "\n\n" ;
-
       // Check if the contacts include one of the target entities.
       for (const auto &contact : contacts->Data().contact())
       {
@@ -339,32 +346,6 @@ void attacher_contact::AttacherContactPrivate::Update(const UpdateInfo &_info,
 }
 
 //////////////////////////////////////////////////
-void attacher_contact::AttacherContactPrivate::AddTargetEntities(const EntityComponentManager &_ecm,
-                                           const std::vector<Entity> &_entities)
-{
-  if (_entities.empty())
-    return;
-
-  for (Entity entity : _entities)
-  {
-    // The target name can be a substring of the desired collision name so we
-    // have to iterate through all collisions and check if their scoped name has
-    // this substring
-    std::string name = scopedName(entity, _ecm);
-    if (name.find(this->targetName) != std::string::npos)
-    {
-
-      ignerr << "NEW ENTITIE " << name << " because the target name is -" << this->targetName << "-\n\n" ;
-      this->targetEntities.push_back(entity);
-    }
-      
-  }
-
-  // Sort so that we can do binary search later on.
-  std::sort(this->targetEntities.begin(), this->targetEntities.end());
-}
-
-//////////////////////////////////////////////////
 void attacher_contact::AttacherContact::Configure(const Entity &_entity,
                             const std::shared_ptr<const sdf::Element> &_sdf,
                             EntityComponentManager &_ecm, EventManager &)
@@ -384,63 +365,54 @@ void attacher_contact::AttacherContact::PreUpdate(const UpdateInfo &, EntityComp
     this->dataPtr->initialized = true;
   }
 
-  // This is not an "else" because "initialized" can be set in the if block
-  // above
-  if (this->dataPtr->initialized)
-  {
-    // Update target entities when new collisions are added
-    std::vector<Entity> potentialEntities;
-    _ecm.EachNew<components::Collision>(
-        [&](const Entity &_entity, const components::Collision *) -> bool
-        {
-          potentialEntities.push_back(_entity);
-          ignerr << "ADD NEW ENTITIE" << "\n\n";
-          return true;
-        });
-    this->dataPtr->AddTargetEntities(_ecm, potentialEntities);
-  }
-
   if ( this->dataPtr->attachRequested)
   {
     this->dataPtr->attachRequested = false;
 
-    std::vector<Entity> potentialEntities;
-    _ecm.Each<components::Collision>(
-        [&](const Entity &_entity, const components::Collision *) -> bool
+    auto modelEntity = _ecm.EntityByComponents(components::Model(),components::Name(this->dataPtr->targetModelName));
+    if (ignition::gazebo::kNullEntity != modelEntity)
+    { 
+      auto linkEntity = _ecm.EntityByComponents(components::Link(), components::ParentEntity(modelEntity),
+          components::Name(this->dataPtr->targetLinkName));
+      
+      if (ignition::gazebo::kNullEntity != linkEntity)
+      {
+        auto linkCollisions = _ecm.ChildrenByComponents(linkEntity, components::Collision());
+        for (const Entity entity : linkCollisions) 
         {
-          potentialEntities.push_back(_entity);
-          return true;
-        });
-
-    this->dataPtr->AddTargetEntities(_ecm, potentialEntities);
-
-    ///////////////////////////////////////////////////////////////// <-----
-
+          if (ignition::gazebo::kNullEntity != entity)
+          {
+            this->dataPtr->targetEntities.push_back(entity);
+          }
+        }
+        std::sort(this->dataPtr->targetEntities.begin(), this->dataPtr->targetEntities.end());
+      }
+    }
 
     // Create a list of collision entities that have been marked as contact
     // sensors in this model. These are collisions that have a ContactSensorData
     // component
 
-    auto allLinks = _ecm.EntitiesByComponents(components::Name(this->dataPtr->sensorLink), components::Link()); //, this->dataPtr->model.Entity()
-        //_ecm.ChildrenByComponents(this->model.Entity(), components::Link());
-
-    for (const Entity linkEntity : allLinks)
-    {std::string name = scopedName(linkEntity, _ecm);
-          ignerr << "SENSOR LINK NAME " << name << "\n\n" ;
-      auto linkCollisions =
-          _ecm.ChildrenByComponents(linkEntity, components::Collision());
-      for (const Entity colEntity : linkCollisions)
+    modelEntity = _ecm.EntityByComponents(components::Model(),components::Name(this->dataPtr->sensorModelName));
+    if (ignition::gazebo::kNullEntity != modelEntity)
+    {
+      auto linkEntity = _ecm.EntityByComponents(components::Link(), components::ParentEntity(modelEntity),
+          components::Name(this->dataPtr->sensorLinkName));
+      
+      if (ignition::gazebo::kNullEntity != linkEntity)
       {
-         if (_ecm.EntityHasComponentType(colEntity,
-                                        components::ContactSensorData::typeId))
+        auto linkCollisions = _ecm.ChildrenByComponents(linkEntity, components::Collision());
+
+        for (const Entity entity : linkCollisions) 
         {
-          ignerr << "NEW ADDED SENSOR " << name << "\n\n" ;
-          this->dataPtr->collisionEntities.push_back(colEntity);
+          if ((ignition::gazebo::kNullEntity != entity) && 
+              (_ecm.EntityHasComponentType(entity, components::ContactSensorData::typeId)))
+          {
+            this->dataPtr->collisionEntities.push_back(entity);
+          }
         }
       }
     }
- 
-
   }
 }
 
@@ -460,43 +432,56 @@ void attacher_contact::AttacherContact::PostUpdate(const UpdateInfo &_info,
 void attacher_contact::AttacherContactPrivate::OnAttachRequest(const ignition::msgs::StringMsg &msg)
 {
     
-  ignmsg << "El mensaje enviado es: " << msg.data() << std::endl;
   
+  ignmsg << "El mensaje enviado es: " << msg.data() << std::endl;
 
-
-  // [AttachableLink1][AttachableLink2]
+  // [Model][AttachableLink1][Model][AttachableLink2]
   //Now the Link must be nammed AttachableLink_Name or wont work
 
   std::string str = msg.data();
 
-  
-  unsigned first = str.find('[');
-  if (first != -1)
+  if(this->enabled == true)
   {
-    str = &str[first];
-    unsigned last = str.find(']');
-    this->sensorLink= str.substr(1,last-1);
-    str = &str[last];
+    if (str.find("end") != -1)
+    {
+      this->Enable(false);
+      ignmsg << "Disabled";
+    }
 
-    first = str.find('[');
-    str = &str[first];
-    last = str.find(']');
-    //this->Link2 = str.substr(1,last-1);
-
-    this->targetName = str.substr(1,last-1); //Link2;
-    this->attachRequested = true;
-    //this->enabled = true;
-    this->Enable(true);
   }
-
-  else  if (str.find("end") != -1)
+  else
   {
-    //this->enabled = false;
-    this->Enable(false);
-    ignmsg << "Disabled";
+    unsigned first = str.find('[');
+
+    if (first != -1)
+    {
+      str = &str[first];
+      unsigned last = str.find(']');
+      this->sensorModelName = str.substr(1,last-1);
+      str = &str[last];
+
+      first = str.find('[');
+      str = &str[first];
+      last = str.find(']');
+      this->sensorLinkName = str.substr(1,last-1);
+      str = &str[last];
+
+      first = str.find('[');
+      str = &str[first];
+      last = str.find(']');
+      this->targetModelName = str.substr(1,last-1);
+      str = &str[last];
+
+      first = str.find('[');
+      str = &str[first];
+      last = str.find(']');
+      this->targetLinkName = str.substr(1,last-1);
+
+      this->attachRequested = true;
+      this->Enable(true);
+
+    }
   }
-
-
 }
 
 

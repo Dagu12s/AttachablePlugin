@@ -69,19 +69,27 @@ void AttachableJoint::PreUpdate(
 {
   //ignmsg << "loop"<< std::endl;
   IGN_PROFILE("AttachableJoint::PreUpdate"); 
+  ignition::msgs::Int32 msg;
 
   if (this->not_initialized)
   {
-  this->node.Subscribe(
-      this->attachtopic, &AttachableJoint::OnAttachRequest, this);
+    this->node.Subscribe(
+        this->attachtopic, &AttachableJoint::OnAttachRequest, this);
 
-  ignmsg << "AttachableJoint subscribing to messages on "
+    ignmsg << "AttachableJoint subscribing to messages on "
           << "[" << this->attachtopic << "]" << std::endl;
 
     this->not_initialized = false;
 
+    ///////////////
+
+    this->error_topic.reset();
+    this->error_topic = this->node.Advertise<ignition::msgs::Int32>("AttachableJoint/error");
+
+    ///////////////
+
   }
-  
+
   if (this->validConfig && this->attachRequested)
   {
     
@@ -132,12 +140,14 @@ void AttachableJoint::PreUpdate(
               this->attachableJointList.push_back({this->attachableJointEntity, this->attachableJointName});
               this->initialized = true;
               this->attachRequested = false;
+              msg.set_data(0);
             }
             else
             {
               this->attachRequested = false;
               ignwarn << "Child Link " << this->childLinkName
                       << " could not be found.\n";
+              msg.set_data(1);
             }
           }
           else if (!this->suppressChildWarning)
@@ -145,6 +155,7 @@ void AttachableJoint::PreUpdate(
             this->attachRequested = false;
             ignwarn << "Child Model " << this->childModelName
                     << " could not be found.\n";
+            msg.set_data(1);
           }
             //Hacemos todo con el hijo
         }
@@ -153,6 +164,7 @@ void AttachableJoint::PreUpdate(
           this->attachRequested = false;
           ignwarn << "Parent Link " << this->parentLinkName
                   << " could not be found.\n";
+          msg.set_data(1);
         }
       }
       else if (!this->suppressParentWarning)
@@ -160,11 +172,13 @@ void AttachableJoint::PreUpdate(
         ignwarn << "Parent Model " << this->parentModelName
                 << " could not be found.\n"; //ignwarnignerr
         this->attachRequested = false;
+        msg.set_data(1);
       }
     }
     else
     {
       this->attachRequested = false;
+      msg.set_data(2);
     }
   }
   if (this->initialized)
@@ -173,12 +187,12 @@ void AttachableJoint::PreUpdate(
     {
       // Detach the models
       int i;
-
+      msg.set_data(1);
       for(i=0;i<=this->attachableJointList.size();i++)      
       {
         if(this->attachableJointList[i].second == this->attachableJointName)
         {
-
+          msg.set_data(0);
           // igndbg << "Removing entity: " << this->attachableJointList << std::endl;
           _ecm.RequestRemoveEntity(this->attachableJointList[i].first);
 
@@ -190,6 +204,8 @@ void AttachableJoint::PreUpdate(
 
     }
   }
+  this->error_topic->Publish(msg);
+
 }
  
 //////////////////////////////////////////////////
